@@ -18,5 +18,4 @@ python main.py
 |(implícito) | Concatenación         | `ab`        |
 | `*`        | Cero o más veces      | `a*`        |
 | `+`        | Una o más vece        | `a+`        |
-| `?`        | Cero o una vez        | `a?`        |
 | `( )`      | Agrupación            |`(a\|b)*c`   |
