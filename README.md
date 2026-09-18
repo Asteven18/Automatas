@@ -2,8 +2,8 @@
 
 - Python
 - Graphviz instalado en el sistema:
-Windows: instalar desde https://graphviz.org/download/ y agregarlo al PATH (Add Graphviz to the system PATH)
-pip install graphviz
+- Windows: instalar desde https://graphviz.org/download/ y agregarlo al PATH (Add Graphviz to the system PATH)
+- pip install graphviz
 
 ```
 ## Ejecución
