@@ -1,16 +1,29 @@
+### 1. Ejecución con Interfaz Gráfica
+```bash
+python app.py
+```
+
+### 2. Modo Consola (Terminal)
+```bash
+python automatas/main.py
+```
+
+---
+
 ## Requisitos
 
-- Python
-- Graphviz instalado en el sistema:
-- Windows: instalar desde https://graphviz.org/download/ y agregarlo al PATH (Add Graphviz to the system PATH)
-- pip install graphviz
+- **Python 3.8 o superior**
+- **Librería graphviz para Python**:
+  ```bash
+  pip install graphviz
+  ```
+- **Graphviz instalado en el sistema**:
+  - En Windows: Descargar desde [graphviz.org/download](https://graphviz.org/download/) y asegurarse de marcar la opción *"Add Graphviz to system PATH"*.
+  - En Linux: `sudo apt-get install graphviz`
 
-```
-## Ejecución
-python main.py
-```
+---
 
-## Sintaxis de expresiones regulares soportada
+## Expresiones Regulares Soportadas
 
 | Operador   | Significado           | Ejemplo     |
 |----------  |-----------------------|-------------|
