@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Autómatas Finitos (AFN & AFD)</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/workbench.css?v=3">
+</head>
+<body>
+
+  <div class="workbench-container">
+
+    <!-- Cabecera -->
+    <header class="workbench-header">
+      <div class="brand-section">
+        <div class="brand-badge">q₀</div>
+        <div class="brand-title">
+          <h1>Generador de Autómatas</h1>
+          <p>Expresiones Regulares ➔ AFN (Thompson) ➔ AFD (Subconjuntos) · Simulación</p>
+        </div>
+      </div>
+
+      <div class="header-meta">
+        <div class="status-pill" id="status-pill">
+          <span class="indicator-dot"></span>
+          <span id="status-text">Conectando...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Panel de entrada -->
+    <section class="input-panel">
+      <div class="input-row">
+        <div class="regex-field-wrapper">
+          <label class="regex-label">Expresión regular</label>
+          <input type="text" id="input-regex" class="regex-input" value="a(b|c)*d" placeholder="Escribe tu expresión regular, ej: a(b|c)*d" spellcheck="false" autocomplete="off">
+        </div>
+        <button id="btn-generar" class="btn-generate">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          Generar autómata
+        </button>
+      </div>
+
+      <!-- Ejemplos y operadores -->
+      <div class="presets-row">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span class="presets-label">Ejemplos:</span>
+          <div class="preset-chips" id="preset-chips"></div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="presets-label">Operadores:</span>
+          <div class="quick-helpers">
+            <button class="helper-key" data-char="|" title="Unión (o)">|</button>
+            <button class="helper-key" data-char="*" title="Cerradura de Kleene (*)">*</button>
+            <button class="helper-key" data-char="+" title="Una o más veces (+)">+</button>
+            <button class="helper-key" data-char="(" title="Abrir paréntesis">(</button>
+            <button class="helper-key" data-char=")" title="Cerrar paréntesis">)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensaje de error -->
+      <div id="banner-error" class="banner-error"></div>
+    </section>
+
+    <!-- Pestañas de navegación -->
+    <nav class="stepper-nav">
+      <button class="step-tab active" data-tab="overview">
+        <span class="step-badge">1</span>
+        <span>Resumen & Postfijo</span>
+      </button>
+      <button class="step-tab" data-tab="afn">
+        <span class="step-badge">2</span>
+        <span>AFN (Thompson)</span>
+      </button>
+      <button class="step-tab" data-tab="afd">
+        <span class="step-badge">3</span>
+        <span>AFD (Subconjuntos)</span>
+      </button>
+      <button class="step-tab" data-tab="sim">
+        <span class="step-badge">4</span>
+        <span>Probar Cadenas</span>
+      </button>
+    </nav>
+
+    <!-- Pestaña 1: Resumen y Postfijo -->
+    <main id="tab-overview" class="tab-content active">
+      <div class="card-section">
+        <div class="card-header">
+          <h2 class="card-title"><span class="title-dot"></span> Conversión de Infijo a Postfijo</h2>
+        </div>
+
+        <div class="transform-flow">
+          <div class="flow-step">
+            <span class="flow-label">1. Expresión Infija</span>
+            <div class="flow-value" id="disp-infijo">—</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">
+            <span class="flow-label">2. Concatenación Explícita</span>
+            <div class="flow-value" id="disp-concat">—</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step highlight">
+            <span class="flow-label">3. Notación Postfija</span>
+            <div class="flow-value" id="disp-postfijo">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-title">Estados del AFN</span>
+          <span class="stat-number" id="stat-afn-estados">—</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">Transiciones AFN</span>
+          <span class="stat-number" id="stat-afn-trans">—</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">Estados del AFD</span>
+          <span class="stat-number amber" id="stat-afd-estados">—</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">Transiciones AFD</span>
+          <span class="stat-number amber" id="stat-afd-trans">—</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">Alfabeto (Σ)</span>
+          <span class="stat-number" id="stat-sigma" style="font-size:1.1rem; font-family:var(--font-mono);">—</span>
+        </div>
+      </div>
+
+      <!-- Definición formal de los autómatas -->
+      <div class="split-view" style="margin-top:16px;">
+        <div class="card-section" style="margin-bottom:0;">
+          <div class="card-header">
+            <h3 class="card-title" style="font-size:0.85rem;"><span class="title-dot purple"></span> 5-Tupla Formal AFN</h3>
+          </div>
+          <pre class="tuple-box" id="tuple-afn">(Genera una expresión regular para ver la tupla)</pre>
+        </div>
+        <div class="card-section" style="margin-bottom:0;">
+          <div class="card-header">
+            <h3 class="card-title" style="font-size:0.85rem;"><span class="title-dot amber"></span> 5-Tupla Formal AFD</h3>
+          </div>
+          <pre class="tuple-box" id="tuple-afd">(Genera una expresión regular para ver la tupla)</pre>
+        </div>
+      </div>
+    </main>
+
+    <!-- Pestaña 2: AFN (Thompson) -->
+    <main id="tab-afn" class="tab-content">
+      <div class="split-view">
+        <aside class="side-panel">
+          <div class="card-section" style="padding:14px; margin-bottom:12px;">
+            <div class="card-header" style="margin-bottom:10px; padding-bottom:8px;">
+              <h3 class="card-title" style="font-size:0.82rem;"><span class="title-dot"></span> Tabla de Transiciones</h3>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table" id="table-afn">
+                <thead>
+                  <tr>
+                    <th>Origen</th>
+                    <th>Símbolo</th>
+                    <th>Destino</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card-section" style="padding:14px; margin-bottom:0;">
+            <div class="card-header" style="margin-bottom:10px; padding-bottom:8px;">
+              <h3 class="card-title" style="font-size:0.82rem;"><span class="title-dot purple"></span> Pasos de Thompson</h3>
+            </div>
+            <div class="terminal-log" id="log-afn"></div>
+          </div>
+        </aside>
+
+        <!-- Canvas AFN -->
+        <section class="graph-stage">
+          <div class="stage-toolbar">
+            <div class="toolbar-group">
+              <span class="presets-label" style="color:var(--text-muted);">Diagrama AFN</span>
+            </div>
+            <div class="toolbar-group">
+              <button class="btn-tool" id="btn-zoom-in-afn" title="Acercar">+</button>
+              <button class="btn-tool" id="btn-zoom-out-afn" title="Alejar">−</button>
+              <button class="btn-tool" id="btn-fit-afn" title="Centrar diagrama">Centrar</button>
+              <button class="btn-tool" id="btn-reset-afn" title="Tamaño 1:1">1:1</button>
+              <button class="btn-tool" id="btn-export-png-afn" title="Guardar PNG">PNG</button>
+            </div>
+          </div>
+          <div class="viewport-canvas" id="canvas-afn">
+            <div class="viewport-content"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Pestaña 3: AFD (Subconjuntos) -->
+    <main id="tab-afd" class="tab-content">
+      <div class="split-view">
+        <aside class="side-panel">
+          <div class="card-section afd-subsets-card" style="padding:16px; margin-bottom:0;">
+            <div class="card-header" style="margin-bottom:12px; padding-bottom:10px;">
+              <h3 class="card-title" style="font-size:0.85rem;"><span class="title-dot amber"></span> Construcción AFD</h3>
+              <div class="subsets-view-toggle">
+                <button class="view-toggle-btn active" data-view="cards" id="btn-view-cards" title="Vista explicada paso a paso">Tarjetas</button>
+                <button class="view-toggle-btn" data-view="dtran" id="btn-view-dtran" title="Tabla formal de subconjuntos">Tabla </button>
+                <button class="view-toggle-btn" data-view="trans" id="btn-view-trans" title="Tabla de transiciones del AFD">Transiciones</button>
+  
+              </div>
+            </div>
+
+            <!-- Vista 1: Tarjetas Paso a Paso -->
+            <div class="subsets-view-panel active" id="panel-subsets-cards">
+              <div class="subsets-filter-bar">
+                <span class="filter-label">Filtrar origen:</span>
+                <div class="filter-chips" id="afd-step-filters">
+                  <button class="chip-filter active" data-filter="all">Todos</button>
+                </div>
+              </div>
+              <div class="step-cards-scroll" id="container-step-cards">
+                <!-- Se inyecta dinámicamente -->
+              </div>
+            </div>
+
+            <!-- Vista 2: Tabla Formal Dtran -->
+            <div class="subsets-view-panel" id="panel-subsets-dtran">
+              <div class="table-wrapper" style="max-height: calc(600px - 90px);">
+                <table class="data-table table-dtran" id="table-dtran">
+                  <thead>
+                    <tr id="dtran-header-row">
+                      <th>Estado AFD</th>
+                      <th>Subconjunto AFN</th>
+                      <th>¿Final?</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dtran-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Vista 3: Tabla de Transiciones AFD -->
+            <div class="subsets-view-panel" id="panel-subsets-trans">
+              <div class="table-wrapper" style="max-height: calc(600px - 90px);">
+                <table class="data-table" id="table-afd">
+                  <thead>
+                    <tr>
+                      <th>Origen</th>
+                      <th>Símbolo</th>
+                      <th>Destino</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Vista 4: Registro de Texto / Terminal -->
+            <div class="subsets-view-panel" id="panel-subsets-raw">
+              <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+              </div>
+              <div class="terminal-log" id="log-afd" style="max-height: calc(600px - 130px);"></div>
+            </div>
+
+          </div>
+        </aside>
+
+        <!-- Canvas AFD -->
+        <section class="graph-stage">
+          <div class="stage-toolbar">
+            <div class="toolbar-group">
+              <span class="presets-label" style="color:var(--accent-amber);">Diagrama AFD</span>
+              <span style="font-size:0.72rem; color:var(--text-dim); margin-left:8px;">(Haz clic en un estado para ver los nodos del AFN que agrupa)</span>
+            </div>
+            <div class="toolbar-group">
+              <button class="btn-tool" id="btn-zoom-in-afd" title="Acercar">+</button>
+              <button class="btn-tool" id="btn-zoom-out-afd" title="Alejar">−</button>
+              <button class="btn-tool" id="btn-fit-afd" title="Centrar diagrama">Centrar</button>
+              <button class="btn-tool" id="btn-reset-afd" title="Tamaño 1:1">1:1</button>
+              <button class="btn-tool" id="btn-export-png-afd" title="Guardar PNG">PNG</button>
+            </div>
+          </div>
+          <div class="viewport-canvas" id="canvas-afd">
+            <div class="viewport-content"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Pestaña 4: Simulación -->
+    <main id="tab-sim" class="tab-content">
+      <div class="card-section" style="margin-bottom:20px;">
+        <div class="card-header">
+          <h2 class="card-title"><span class="title-dot emerald" style="background:var(--accent-emerald);"></span> Simulación de Cadenas</h2>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-tool btn-sim-mode active" data-mode="afd">Simular en AFD</button>
+            <button class="btn-tool btn-sim-mode" data-mode="afn">Simular en AFN</button>
+          </div>
+        </div>
+
+        <div class="input-row" style="margin-bottom:14px;">
+          <div class="regex-field-wrapper">
+            <label class="regex-label">Cadena a evaluar</label>
+            <input type="text" id="input-cadena" class="regex-input" value="ad" placeholder="Escribe la cadena a probar (ej: ad, abccbd)" spellcheck="false" autocomplete="off">
+          </div>
+          <button id="btn-iniciar-sim" class="btn-generate" style="background:var(--accent-amber);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Probar cadena
+          </button>
+        </div>
+
+        <!-- Cinta de caracteres -->
+        <span class="step-label">Cinta de caracteres:</span>
+        <div class="tape-container" id="tape-cells"></div>
+
+        <!-- Controles de Reproducción -->
+        <div class="playback-controls">
+          <div class="playback-btn-group">
+            <button class="btn-playback" id="btn-step-reset" title="Reiniciar">⏮ Reiniciar</button>
+            <button class="btn-playback" id="btn-step-prev" title="Paso anterior (Flecha Izquierda)" disabled>◀ Anterior</button>
+            <button class="btn-playback primary" id="btn-play-pause" title="Reproducir / Pausar (Espacio)">
+              <span class="icon">▶</span> Reproducir
+            </button>
+            <button class="btn-playback" id="btn-step-next" title="Paso siguiente (Flecha Derecha)">Siguiente ▶</button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div class="speed-selector">
+              <span class="presets-label" style="padding-left:4px;">Velocidad:</span>
+              <button class="btn-speed" data-speed="1400">0.5x</button>
+              <button class="btn-speed active" data-speed="800">1.0x</button>
+              <button class="btn-speed" data-speed="350">2.0x</button>
+            </div>
+            <span class="presets-label" id="sim-step-counter" style="font-size:0.8rem; color:var(--text-main);">Paso 0 de 0</span>
+          </div>
+        </div>
+
+        <!-- Traza del paso actual -->
+        <div style="margin-top:14px; background:var(--bg-input); border:1px solid var(--border-subtle); padding:10px 14px; border-radius:6px; font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-cyan);" id="trace-step-text">
+          Ingresa una cadena y presiona «Probar cadena».
+        </div>
+
+        <!-- Veredicto Final -->
+        <div id="verdict-banner" class="verdict-banner"></div>
+      </div>
+
+      <!-- Grafo con estado activo -->
+      <section class="graph-stage">
+        <div class="stage-toolbar">
+          <div class="toolbar-group">
+            <span class="presets-label" style="color:var(--accent-amber);">Recorrido del autómata</span>
+          </div>
+          <div class="toolbar-group">
+            <button class="btn-tool" id="btn-zoom-in-sim" title="Acercar">+</button>
+            <button class="btn-tool" id="btn-zoom-out-sim" title="Alejar">−</button>
+            <button class="btn-tool" id="btn-fit-sim" title="Centrar diagrama">Centrar</button>
+            <button class="btn-tool" id="btn-reset-sim" title="Tamaño 1:1">1:1</button>
+            <button class="btn-tool" id="btn-export-png-sim" title="Guardar PNG">PNG</button>
+          </div>
+        </div>
+        <div class="viewport-canvas" id="canvas-sim">
+          <div class="viewport-content"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="workbench-footer">
+      Generador de Autómatas Finitos · Operadores: | (unión), · (concatenación), * (Kleene), + (cierre positivo) y paréntesis.
+    </footer>
+
+  </div>
+
+  <script src="js/renderer.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
+
+</body>
+</html>
